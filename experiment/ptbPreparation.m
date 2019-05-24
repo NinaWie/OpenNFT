@@ -15,7 +15,7 @@ function ptbPreparation(screenId, workFolder, protName)
 % End-user is adviced to configure the use of PTB on their own workstation
 % and justify more advanced configuration for PTB.
 %__________________________________________________________________________
-% Copyright (C) 2016-2019 OpenNFT.org
+% Copyright (C) 2016-2017 OpenNFT.org
 %
 % Written by Yury Koush
 
@@ -48,11 +48,11 @@ fFullScreen = P.DisplayFeedbackFullscreen;
 if ~fFullScreen
     % part of the screen, e.g. for test mode
     if strcmp(protName, 'Cont')
-        P.Screen.wPtr = Screen('OpenWindow', screenid, [125 125 125], ...
+        P.Screen.wPtr = Screen('OpenWindow', screenid, [204 204 204], ...
             [40 40 640 520]);
     else
-        P.Screen.wPtr = Screen('OpenWindow', screenid, [125 125 125], ...
-            [40 40 720 720]);
+        P.Screen.wPtr = Screen('OpenWindow', screenid, [0 0 0], ...
+            [40 40 640 520]);
     end
 else
     % full screen
@@ -75,88 +75,44 @@ P.eventRecords = [0, 0, 0, 0];
 %% PSC
 if strcmp(protName, 'Cont')
     % fixation
-    P.Screen.fix = [w/2-w/150, h/2-w/150, w/2+w/150, h/2+w/150];
+    P.Screen.fix = [w/2-w/150, h/2-w/150, w/2+w/150, h/2+w/150]; % center point that starts flickering
     Screen('FillOval', P.Screen.wPtr, [255 255 255], P.Screen.fix);
-    P.Screen.vbl=Screen('Flip', P.Screen.wPtr,P.Screen.vbl+P.Screen.ifi/2);
-    Tex = struct;
-end
-
-if strcmp(protName, 'ContTask')
-    % Set up alpha-blending for smooth (anti-aliased) lines
-    Screen('BlendFunction', P.Screen.wPtr, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
+    P.Screen.vbl=Screen('Flip', P.Screen.wPtr,P.Screen.vbl+P.Screen.ifi/2); 
+    % flips at last flip time point+half of window flip interval, save as
+    % new vbl
     
-    % fixation cross settings
-    P.Screen.fixCrossDimPix = 40;
-    
-    % Set the line width for fixation cross
-    P.Screen.lineWidthPix = 4;
-
-    % Setting the coordinates
-    P.Screen.wRect = [0, 0, P.Screen.w, P.Screen.h];
-    [P.Screen.xCenter, P.Screen.yCenter] = RectCenter(P.Screen.wRect);
-    P.Screen.xCoords = [-P.Screen.fixCrossDimPix P.Screen.fixCrossDimPix 0 0];
-    P.Screen.yCoords = [0 0 -P.Screen.fixCrossDimPix P.Screen.fixCrossDimPix];
-    P.Screen.allCoords = [P.Screen.xCoords; P.Screen.yCoords];
-    
-    % scramble-image presentation parameters
-    P.Screen.numSecs = 1;    % presentation dur in sec (500ms)
-    P.Screen.numFrames = round(P.Screen.numSecs / P.Screen.ifi);    % in frames
-    
-    % get some color information
-    P.Screen.white = WhiteIndex(screenid);
-    P.Screen.black = BlackIndex(screenid);
-    P.Screen.grey  = P.Screen.white / 2;
-
-    % response option coords on the x and y axis relative to center 
-    P.Screen.option_lx = -250;    % left option     x
-    P.Screen.option_rx = 150;     % right option    x
-    P.Screen.option_ly = 300;     % left option     y
-    P.Screen.option_ry = 300;     % right option    y
-    
-    % accepted response keys
-    P.Screen.leftKey = KbName('1');
-    P.Screen.rightKey = KbName('2');
-
-    % show initial fixation dot
-    P.Screen.fix = [w/2-w/150, h/2-w/150, w/2+w/150, h/2+w/150];
-    Screen('FillOval', P.Screen.wPtr, [255 255 255], P.Screen.fix);
-    P.Screen.vbl=Screen('Flip', P.Screen.wPtr,P.Screen.vbl+P.Screen.ifi/2);
-
-    %% Prepare PTB Sprites
-    stimPath = P.TaskFolder;
-    load([stimPath filesep 'stimNames.mat'])
-    
-    sz = size(stimNames,2);             % nr of unique images
-    P.Screen.nrims = 10;                % how many repetitions of an image
-    Tex = zeros(sz,P.Screen.nrims);     % initialize pointer matrix
-    for i = 1:sz
-        for j = 1:P.Screen.nrims 
-            imgArr = imread([stimPath filesep stimNames{i} filesep num2str(j) '.png']);
-            Tex(i,j) = Screen('MakeTexture', P.Screen.wPtr, imgArr);
-            clear imgArr
-        end
+    %%% added for coffee cups
+    for i = 1:32
+        imgSm = imread([workFolder filesep 'Settings' filesep ...
+            'Coffee_Cup_V2' filesep 'Coffee_Cup_V2_' sprintf('%02d', i)], 'png');
+        % imgSm = imread([workFolder filesep 'Settings' filesep ...
+          %   'Smiley' filesep 'Sm' sprintf('%02d', i)], 'bmp');
+        P.Screen.texSm(i) = Screen('MakeTexture', P.Screen.wPtr, imgSm);
+        clear imgSm
     end
-    
-    % text font, size and style
-    Screen('TextFont',P.Screen.wPtr, 'Courier New');
-    Screen('TextSize', P.Screen.wPtr, 12);
-    Screen('TextStyle',P.Screen.wPtr, 3);
-    
-    % initiate trial counter variable for keeping track of task trials.
-    % Counter values will be used to index images in texture pointer mat.
-    P.Task.trialCounter = 1;
-   
+    [img_height, img_width, num_channels] = size(imread([workFolder filesep 'Settings' filesep ...
+            'Coffee_Cup_V2' filesep 'Coffee_Cup_V2_01' ], 'png'));
+    whratio = img_width/img_height;
+    img_part_h = 300;
+    img_part_w = img_part_h*whratio;
+    P.Screen.rectSm = [img_part_w,img_part_h,img_width-img_part_w, img_height-img_part_h];
+    P.Screen.dispRect = [(w/3 - (h*(whratio)/4)), h/4 , (w/3 + (h*(whratio)/4)), h*(3/4)];
 end
 
 if strcmp(protName, 'Inter')
-    for i = 1:10
+    for i = 1:32
         imgSm = imread([workFolder filesep 'Settings' filesep ...
-            'Smiley' filesep 'Sm' sprintf('%02d', i)], 'bmp');
-        Tex(i) = Screen('MakeTexture', P.Screen.wPtr, imgSm);
+            'Coffee_Cup_V2' filesep 'Coffee_Cup_V2_' sprintf('%02d', i)], 'png');
+        % imgSm = imread([workFolder filesep 'Settings' filesep ...
+          %   'Smiley' filesep 'Sm' sprintf('%02d', i)], 'bmp');
+        P.Screen.texSm(i) = Screen('MakeTexture', P.Screen.wPtr, imgSm);
         clear imgSm
     end
-    P.Screen.rectSm = Screen('Rect', Tex(i));
+    [img_width, img_height, num_channels] = size(imread([workFolder filesep 'Settings' filesep ...
+            'Coffee_Cup_V2' filesep 'Coffee_Cup_V2_01' ], 'png'));
+    % P.Screen.dispRect = [w/2-img_width/2, h/2-img_height/2, w/2+img_width/2, h/2+img_height/2]; 
     
+    P.Screen.rectSm = Screen('Rect', P.Screen.texSm(i));
     w_dispRect = round(P.Screen.rectSm(4)*1.5);
     w_offset_dispRect = 0;
     P.Screen.dispRect =[(w/2 - w_dispRect/2), ...
@@ -229,12 +185,12 @@ if strcmp(protName, 'InterBlock')
     basePath = strcat(workFolder, filesep, 'Settings', filesep);
     load([basePath 'namePictP.mat']);
     sz = size(namePictP,1);
-    Tex.P = zeros(1,sz);
+    P.texP = zeros(1,sz);
     for i = 1:sz
         fname = strrep(namePictP(i,:), ['.' filesep], basePath);
         imgArr = imread(fname);
         dimImgArr = size(imgArr);
-        Tex.P(i) = Screen('MakeTexture', P.Screen.wPtr, imgArr);
+        P.texP(i) = Screen('MakeTexture', P.Screen.wPtr, imgArr);
         clear imgArr
     end
     
@@ -242,12 +198,12 @@ if strcmp(protName, 'InterBlock')
     basePath = strcat(workFolder, filesep, 'Settings', filesep);
     load([basePath 'namePictN.mat']);
     sz = size(namePictN,1);
-    Tex.N = zeros(1,sz);
+    P.texN = zeros(1,sz);
     for i = 1:sz
         fname = strrep(namePictN(i,:), ['.' filesep], basePath);
         imgArr = imread(fname);
         dimImgArr = size(imgArr);
-        Tex.N(i) = Screen('MakeTexture', P.Screen.wPtr, imgArr);
+        P.texN(i) = Screen('MakeTexture', P.Screen.wPtr, imgArr);
         clear imgArr
     end
     
@@ -261,8 +217,10 @@ if strcmp(protName, 'InterBlock')
         [P.Screen.w/2-w/100, P.Screen.h/2-w/100, ...
         P.Screen.w/2+w/100, P.Screen.h/2+w/100]);
     P.Screen.vbl=Screen('Flip', P.Screen.wPtr,P.Screen.vbl+P.Screen.ifi/2);
+    
+    assignin('base', 'texP', P.texP);
+    assignin('base', 'texN', P.texN);
 end
 
 assignin('base', 'P', P);
-assignin('base', 'Tex', Tex);
 

@@ -31,19 +31,36 @@ condition = mainLoopData.condition;
 [isPSC, isDCM, isSVM, isIGLM] = getFlagsType(P);
 
 %% Continuous PSC NF
-if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
+if isPSC && strcmp(P.Prot, 'Cont')
     blockNF = mainLoopData.blockNF;
     firstNF = mainLoopData.firstNF;
-
+    
+    if (condition == 2 || condition==3)
     % NF estimation condition
-    if condition == 2
-
-        % count NF regulation blocks
-        k = cellfun(@(x) x(1) == indVolNorm, P.ProtNF);
-        if any(k)
-            blockNF = find(k);
+% 
+%         % count NF regulation blocks
+%         k = cellfun(@(x) x(1) == indVolNorm, P.ProtNF);
+%         if any(k)
+%             blockNF = find(k);
+%             firstNF = indVolNorm;
+%         end
+%         k2 = cellfun(@(x) x(1) == indVolNorm, P.ProtNF2);
+%         if any(k2)
+%             blockNF = find(k2);
+%             firstNF = indVolNorm;
+%         end
+        curr_block = P.ProtNF(indVolNorm);
+        if ~curr_block==0
+            blockNF = curr_block;
             firstNF = indVolNorm;
         end
+        
+        disp("nfb calc block nf and first nf");
+        disp(blockNF);
+        disp(firstNF);
+        parameters;
+        disp("PARAMETER TEST");
+        disp(PARAMS.test);
     
         % Get reference baseline in cumulated way across the RUN, 
         % or any other fashion
@@ -65,7 +82,11 @@ if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
 
         % compute average %SC feedback value
         tmp_fbVal = eval(P.RoiAnatOperation); 
-        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
+        dispValue = round(10^P.FeedbackValDec * tmp_fbVal); % change
+        % dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; % change
+        
+        disp("nfb calc dispValue");
+        disp(dispValue);
 
         % [0...P.MaxFeedbackVal], for Display
         if ~P.NegFeedback && dispValue < 0
@@ -76,7 +97,7 @@ if isPSC && (strcmp(P.Prot, 'Cont') || strcmp(P.Prot, 'ContTask'))
         if dispValue > P.MaxFeedbackVal
             dispValue = P.MaxFeedbackVal;
         end
-
+        
         mainLoopData.norm_percValues(indVolNorm,:) = norm_percValues;
         mainLoopData.dispValues(indVolNorm) = dispValue;
         mainLoopData.dispValue = dispValue;
@@ -144,7 +165,7 @@ if isPSC && strcmp(P.Prot, 'Inter')
             % compute average %SC feedback value
             tmp_fbVal = eval(P.RoiAnatOperation); 
             mainLoopData.vectNFBs(indVolNorm) = tmp_fbVal;
-            dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
+            dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
             % [0...P.MaxFeedbackVal], for Display
             if ~P.NegFeedback && dispValue < 0
@@ -155,6 +176,9 @@ if isPSC && strcmp(P.Prot, 'Inter')
             if dispValue > P.MaxFeedbackVal
                 dispValue = P.MaxFeedbackVal;
             end
+            if dispValue > -100 % P.MinFeedbackVal
+                dispValue = -100; % P.MinFeedbackVal;
+            end            
 
             % regSuccess and Shaping 
             P.actValue(blockNF) = tmp_fbVal;
@@ -229,7 +253,7 @@ if isDCM
         mainLoopData.vectNFBs(indNFTrial) = logBF;
         mainLoopData.flagEndDCM = 1;
         tmp_fbVal = mainLoopData.logBF(indNFTrial);
-        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
+        mainLoopData.dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
         % calculating monetory reward value
         if mainLoopData.dispValue > thReward
@@ -272,7 +296,7 @@ if isSVM
 
         % compute average feedback value
         tmp_fbVal = eval(P.RoiAnatOperation); 
-        dispValue = round(P.MaxFeedbackVal*tmp_fbVal, P.FeedbackValDec); 
+        dispValue = round(P.MaxFeedbackVal*10^P.FeedbackValDec * tmp_fbVal) /10^P.FeedbackValDec; 
 
         mainLoopData.norm_percValues(indVolNorm,:) = norm_percValues;
         mainLoopData.dispValues(indVolNorm) = dispValue;
