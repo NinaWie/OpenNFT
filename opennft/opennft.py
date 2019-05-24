@@ -1385,6 +1385,7 @@ class OpenNFT(QWidget):
         else:
             self.leRoiAnatFolder.setText(self.settings.value('RoiFilesFolder', ''))
         self.leRoiAnatOperation.setText(self.settings.value('RoiAnatOperation', ''))
+        self.cbDynamicROI.setChecked(str(self.settings.value('DynamicROI', 'false')).lower() == 'true')
         self.leRoiGroupFolder.setText(self.settings.value('RoiGroupFolder', ''))
         self.leAnatBgFolder.setText(self.settings.value('AnatBgFolder', ''))
         self.leMCTempl.setText(self.settings.value('MCTempl', ''))
@@ -1489,7 +1490,8 @@ class OpenNFT(QWidget):
             self.P['RoiAnatFolder'] = self.leRoiAnatFolder.text()
         else:
             self.P['RoiFilesFolder'] = self.leRoiAnatFolder.text()
-        self.P['RoiAnatOperation'] = self.leRoiAnatOperation.text()        
+        self.P['RoiAnatOperation'] = self.leRoiAnatOperation.text()
+        self.P['DynamicROI'] = self.cbDynamicROI.isChecked()
         self.P['RoiGroupFolder'] = self.leRoiGroupFolder.text()
         self.P['AnatBgFolder'] = self.leAnatBgFolder.text()
         self.P['MCTempl'] = self.leMCTempl.text()
@@ -1573,7 +1575,8 @@ class OpenNFT(QWidget):
             self.settings.setValue('RoiAnatFolder', self.P['RoiAnatFolder'])
         else:
             self.settings.setValue('RoiFilesFolder', self.P['RoiFilesFolder'])
-        self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])        
+        self.settings.setValue('RoiAnatOperation', self.P['RoiAnatOperation'])  
+        self.settings.setValue('DynamicROI', self.P['DynamicROI'])
         self.settings.setValue('RoiGroupFolder', self.P['RoiGroupFolder'])
         self.settings.setValue('AnatBgFolder', self.P['AnatBgFolder'])
         self.settings.setValue('MCTempl', self.P['MCTempl'])

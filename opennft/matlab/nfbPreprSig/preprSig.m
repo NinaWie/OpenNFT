@@ -68,7 +68,7 @@ for indRoi = 1:P.NrROIs
         indNFTrial = P.indNFTrial;
         
         % manual set of ROI adaptation scheme
-        isFixedGrROIforDCM = 0;
+        isFixedGrROIforDCM = ~P.DynamicROI;
         if isFixedGrROIforDCM
             % fixed group ROI
             if ~P.smForDCM
